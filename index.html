@@ -4,257 +4,316 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#030605">
-<title>SYS://CONTROL</title>
-
+<title>SYS://CONTROL 2.0</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;padding:18px;background:#030605;color:#00ff66;
- font-family:monospace;min-height:100vh
-}
-header{border-bottom:1px solid #00ff6655;padding-bottom:15px}
-h1{color:#00ff66;text-shadow:0 0 12px #00ff66;font-size:27px}
-h3{color:#00ff66}
-.yellow{color:#ffff00}
-.red{color:#ff4444}
-.muted{color:#9bb6a3;font-size:13px;line-height:1.6}
-.panel{
- background:#07110b;border:1px solid #00ff6655;
- border-radius:10px;padding:17px;margin-top:17px
-}
-button{
- background:#063d20;color:#00ff66;border:1px solid #00ff66;
- padding:14px;border-radius:6px;width:100%;margin-top:10px;
- font-family:monospace;font-weight:bold;font-size:14px;
- cursor:pointer
-}
-button:active{background:#00ff66;color:#000}
-button.danger{color:#ff5555;border-color:#ff5555;background:#260707}
-button.secondary{color:#ffff00;border-color:#ffff00;background:#282500}
-input,textarea{
- width:100%;padding:13px;background:#000;color:#00ff66;
- border:1px solid #00ff66;margin-top:10px;
- font-family:monospace;border-radius:5px
-}
-textarea{min-height:80px;resize:vertical}
-video{
- width:100%;background:#000;border:1px solid #00ff66;
- margin-top:12px;border-radius:6px
-}
-.hidden{display:none}
-.status{font-size:13px;margin-top:12px;overflow-wrap:anywhere}
-.pill{
- display:inline-block;border:1px solid #00ff66;
- padding:5px 9px;border-radius:20px;font-size:11px
-}
-footer{padding:25px 0;text-align:center}
-@media(min-width:700px){
- body{max-width:760px;margin:auto;padding:28px}
- .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-}
+body{margin:0;background:#050b09;color:#d9ffe8;font-family:Arial,sans-serif;padding:20px}
+main{max-width:720px;margin:auto}
+header{text-align:center;padding:25px 10px}
+h1{color:#39ff91;letter-spacing:3px}
+h2{font-size:16px;color:#39ff91}
+.panel{background:#0b1712;border:1px solid #174b32;border-radius:12px;padding:18px;margin:15px 0}
+button,input,textarea{width:100%;padding:13px;margin:7px 0;border-radius:7px;border:1px solid #286b48;background:#07110c;color:#eafff1;font-size:15px}
+button{background:#123b25;color:#65ffa5;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.45}
+.danger{background:#401b1b;border-color:#8d3939;color:#ffaaaa}
+.choice{display:flex;gap:10px}
+.choice button{flex:1}
+.status{color:#8dffb5;white-space:pre-wrap;line-height:1.6}
+small{color:#8da99a;line-height:1.5}
+.item{padding:10px;border-bottom:1px solid #214331}
+footer{text-align:center;color:#688675;padding:25px;font-size:12px}
 </style>
 </head>
-
 <body>
-
+<main>
 <header>
 <h1>SYS://CONTROL</h1>
-<div class="yellow">[ SYSTEM INITIALIZED ]</div>
-<div>VERSION: 2.0.0</div>
-<div class="red status" id="status">[ STATUS: WAITING ]</div>
+<p>DEVICE LINK // VERSION 2.0</p>
+<p class="status" id="connection">CONECTANDO AO SERVIDOR...</p>
 </header>
 
 <section class="panel">
-<h3>01 // OPERATION MODE</h3>
-<p class="muted">Selecione como deseja utilizar o sistema.</p>
-
-<div class="actions">
+<h2>01 // OPERATION MODE</h2>
+<div class="choice">
 <button onclick="setMode('admin')">ADMIN MODE</button>
 <button onclick="setMode('client')">CLIENT MODE</button>
 </div>
-
-<p class="yellow" id="mode">MODE: NOT SELECTED</p>
+<p id="mode">MODE: NOT SELECTED</p>
 </section>
 
 <section class="panel">
-<h3>02 // SESSION</h3>
-<p class="muted">
-A conexão só poderá começar com autorização da pessoa que está
-utilizando o aparelho.
-</p>
-
-<label for="sessionCode">SESSION CODE</label>
-<input id="sessionCode" placeholder="Digite o código da sessão">
-
-<button onclick="createCode()">GERAR CÓDIGO</button>
-<p id="codeResult" class="yellow"></p>
+<h2>02 // SESSION</h2>
+<div id="adminArea" hidden>
+<button onclick="createSession()">GERAR CÓDIGO E CRIAR SESSÃO</button>
+<p>CÓDIGO DA SESSÃO:</p>
+<h1 id="sessionCode">--------</h1>
+<button onclick="copyCode()">COPIAR CÓDIGO</button>
+<button class="danger" onclick="endSession()">ENCERRAR SESSÃO</button>
+</div>
+<div id="clientArea" hidden>
+<input id="codeInput" placeholder="DIGITE O CÓDIGO DA SESSÃO" maxlength="12">
+<button onclick="joinSession()">CONECTAR PELO CÓDIGO</button>
+<div class="choice">
+<button onclick="authorizeSession()">YES // AUTORIZAR</button>
+<button class="danger" onclick="declineSession()">NO // RECUSAR</button>
+</div>
+</div>
+<p class="status" id="sessionStatus">Nenhuma sessão ativa.</p>
 </section>
 
 <section class="panel">
-<h3>03 // ACCESS AUTHORIZATION</h3>
-<p class="muted">
-A pessoa deve autorizar o compartilhamento diretamente no navegador.
-</p>
-
-<button onclick="authorize()">YES // AUTORIZAR SESSÃO</button>
-<button class="danger" onclick="denyAccess()">NO // RECUSAR</button>
-
-<p id="permission" class="yellow">[ AGUARDANDO AUTORIZAÇÃO ]</p>
-
-<button class="secondary" onclick="requestScreen()">
-SHARE MY SCREEN
-</button>
-
-<video id="screen" autoplay playsinline muted></video>
-
-<button class="danger" onclick="stopScreen()">ENCERRAR SESSÃO</button>
-</section>
-
-<section class="panel">
-<h3>04 // ACTION REQUEST</h3>
-<p class="muted">
-Envie uma solicitação descritiva. Nenhuma ação será executada
-automaticamente no aparelho.
-</p>
-
-<textarea id="command" placeholder="Descreva a solicitação..."></textarea>
-
+<h2>03 // ACTION REQUEST</h2>
+<textarea id="requestText" rows="3" placeholder="Descreva sua solicitação..."></textarea>
 <button onclick="sendRequest()">SEND REQUEST</button>
-
-<p id="response" class="yellow">[ NO REQUEST SENT ]</p>
+<div id="requests" class="status">Nenhuma solicitação.</div>
 </section>
 
 <section class="panel">
-<h3>05 // SESSION INFORMATION</h3>
-<p class="muted" id="sessionInfo">
-Nenhuma sessão ativa.
-</p>
-<p class="muted">
-O compartilhamento pode ser interrompido pelo navegador ou pela
-pessoa que autorizou.
-</p>
+<h2>04 // SESSION INFORMATION</h2>
+<p class="status" id="info">Aguardando sessão.</p>
+<small>O compartilhamento de tela depende do suporte do navegador e da autorização explícita do usuário. Esta versão ainda não transmite a tela para o outro aparelho nem executa comandos nele.</small>
 </section>
 
-<footer>
-<div class="yellow">[ SYS.JS // DEVICE LINK ]</div>
-<p class="muted">USER CONSENT REQUIRED</p>
-</footer>
+<footer>SYS.JS // DEVICE LINK<br>USER CONSENT REQUIRED</footer>
+</main>
 
 <script>
-let currentMode = "";
-let screenStream = null;
-let authorized = false;
+const SUPABASE_URL = 'https://jwtrbuvzfiouhrkvcqgp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_dajylApNZVhRfcvyzWklOQ_4W2UBjDm';
 
-function setStatus(message){
- document.getElementById("status").textContent =
- "[ STATUS: " + message + " ]";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let mode = null;
+let sessionId = null;
+let currentCode = null;
+let poller = null;
+
+const $ = id => document.getElementById(id);
+
+async function initialize(){
+  try {
+    let {data:{session}} = await db.auth.getSession();
+
+    if(!session){
+      const {data,error} = await db.auth.signInAnonymously();
+      if(error) throw error;
+    }
+
+    $('connection').textContent = 'SERVER: CONNECTED';
+  } catch(error) {
+    $('connection').textContent = 'ERRO DE CONEXÃO: ' + error.message;
+  }
 }
 
-function setMode(mode){
- currentMode = mode.toUpperCase();
- document.getElementById("mode").textContent =
- "MODE: " + currentMode;
- setStatus("MODE SELECTED");
+function setMode(value){
+  mode = value;
+  $('mode').textContent = 'MODE: ' + value.toUpperCase();
+  $('adminArea').hidden = value !== 'admin';
+  $('clientArea').hidden = value !== 'client';
 }
 
-function createCode(){
- const code = Math.random().toString(36)
- .substring(2,8).toUpperCase();
-
- document.getElementById("sessionCode").value = code;
- document.getElementById("codeResult").textContent =
- "[ SESSION CODE: " + code + " ]";
-
- document.getElementById("sessionInfo").textContent =
- "Código criado neste aparelho: " + code +
- ". Ainda não está conectado a outro dispositivo.";
+function randomCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i=0;i<8;i++){
+    code += chars[Math.floor(Math.random()*chars.length)];
+  }
+  return code;
 }
 
-function authorize(){
- authorized = true;
- document.getElementById("permission").textContent =
- "[ SESSION AUTHORIZED ON THIS PAGE ]";
- document.getElementById("sessionInfo").textContent =
- "Autorização local concedida. O compartilhamento de tela ainda depende da confirmação do navegador.";
- setStatus("AUTHORIZED LOCALLY");
+async function createSession(){
+  if(mode !== 'admin') return alert('Selecione ADMIN MODE.');
+
+  const {data:{user}} = await db.auth.getUser();
+  if(!user) return alert('Autenticação não concluída. Atualize a página.');
+
+  for(let attempt=0;attempt<3;attempt++){
+    const code = randomCode();
+    const {data,error} = await db.rpc('criar_sessao',{p_codigo:code});
+
+    if(!error){
+      sessionId = data;
+      currentCode = code;
+      $('sessionCode').textContent = code;
+      $('sessionStatus').textContent = 'Sessão criada. Aguardando o cliente.';
+      $('info').textContent = 'Código criado. Envie-o somente à pessoa que deseja convidar.';
+      startPolling();
+      return;
+    }
+
+    if(!String(error.message).toLowerCase().includes('duplicate')){
+      alert('Não foi possível criar a sessão: ' + error.message);
+      return;
+    }
+  }
+  alert('Não foi possível gerar um código exclusivo. Tente novamente.');
 }
 
-function denyAccess(){
- authorized = false;
- stopScreen();
- document.getElementById("permission").textContent =
- "[ ACCESS REFUSED ]";
- setStatus("ACCESS DENIED");
+async function copyCode(){
+  if(!currentCode) return;
+  try {
+    await navigator.clipboard.writeText(currentCode);
+    alert('Código copiado!');
+  } catch {
+    alert('Seu código é: ' + currentCode);
+  }
 }
 
-async function requestScreen(){
- if(!authorized){
-  alert("Primeiro autorize a sessão com YES.");
-  return;
- }
+async function joinSession(){
+  if(mode !== 'client') return alert('Selecione CLIENT MODE.');
 
- if(!navigator.mediaDevices ||
-    !navigator.mediaDevices.getDisplayMedia){
-  alert("Este navegador não oferece compartilhamento de tela nesta página. Tente outro navegador ou dispositivo compatível.");
-  return;
- }
+  const code = $('codeInput').value.trim().toUpperCase();
+  if(!code) return alert('Digite o código.');
 
- try{
-  screenStream =
-   await navigator.mediaDevices.getDisplayMedia({
-    video:true,
-    audio:false
-   });
+  const {data,error} = await db.rpc('entrar_sessao',{p_codigo:code});
+  if(error) return alert('Não foi possível entrar: ' + error.message);
 
-  document.getElementById("screen").srcObject =
-   screenStream;
-
-  setStatus("SCREEN SHARING ACTIVE");
-
-  screenStream.getVideoTracks()[0]
-   .addEventListener("ended",stopScreen);
-
- }catch(error){
-  setStatus("SCREEN SHARE NOT STARTED");
-  document.getElementById("permission").textContent =
-   "[ SHARING CANCELLED OR NOT ALLOWED ]";
- }
+  sessionId = data;
+  currentCode = code;
+  $('sessionStatus').textContent = 'Pedido de conexão enviado. Aguarde a decisão.';
+  $('info').textContent = 'Você entrou na sessão. Escolha YES para autorizar ou NO para recusar.';
+  startPolling();
 }
 
-function stopScreen(){
- if(screenStream){
-  screenStream.getTracks().forEach(track=>track.stop());
-  screenStream = null;
- }
+async function authorizeSession(){
+  if(mode !== 'client' || !currentCode) return alert('Entre em uma sessão primeiro.');
 
- document.getElementById("screen").srcObject = null;
- authorized = false;
+  const {error} = await db.rpc('autorizar_sessao',{p_codigo:currentCode});
+  if(error) return alert(error.message);
 
- document.getElementById("permission").textContent =
- "[ SESSION CLOSED ]";
-
- setStatus("SESSION CLOSED");
+  $('sessionStatus').textContent = 'SESSÃO AUTORIZADA.';
+  await refreshSession();
 }
 
-function sendRequest(){
- const command =
- document.getElementById("command").value.trim();
+async function declineSession(){
+  if(mode !== 'client' || !currentCode) return alert('Entre em uma sessão primeiro.');
 
- if(!command){
-  alert("Digite uma solicitação primeiro.");
-  return;
- }
+  const {error} = await db.rpc('recusar_sessao',{p_codigo:currentCode});
+  if(error) return alert(error.message);
 
- if(!authorized){
-  alert("A sessão precisa estar autorizada nesta página.");
-  return;
- }
-
- document.getElementById("response").textContent =
- "[ REQUEST REGISTERED LOCALLY ]: " + command;
+  $('sessionStatus').textContent = 'SESSÃO RECUSADA.';
+  await refreshSession();
 }
+
+async function endSession(){
+  if(mode !== 'admin' || !currentCode) return alert('Nenhuma sessão ativa.');
+
+  const {error} = await db.rpc('encerrar_sessao',{p_codigo:currentCode});
+  if(error) return alert(error.message);
+
+  $('sessionStatus').textContent = 'SESSÃO ENCERRADA.';
+  stopPolling();
+  await refreshSession();
+}
+
+async function refreshSession(){
+  if(!sessionId) return;
+
+  const {data,error} = await db
+    .from('sessoes')
+    .select('id,codigo,status,criado_em')
+    .eq('id',sessionId)
+    .maybeSingle();
+
+  if(error){
+    $('info').textContent = 'Erro ao consultar sessão: ' + error.message;
+    return;
+  }
+
+  if(!data){
+    $('info').textContent = 'Sessão não encontrada ou sem acesso.';
+    return;
+  }
+
+  $('sessionStatus').textContent = 'STATUS: ' + data.status.toUpperCase();
+
+  if(data.status === 'autorizada'){
+    $('info').textContent = 'A pessoa autorizou a sessão. A comunicação de solicitações está disponível.';
+  } else if(data.status === 'recusada'){
+    $('info').textContent = 'A pessoa recusou a sessão.';
+    stopPolling();
+  } else if(data.status === 'encerrada'){
+    $('info').textContent = 'Esta sessão foi encerrada.';
+    stopPolling();
+  } else {
+    $('info').textContent = 'Aguardando autorização da pessoa no outro aparelho.';
+  }
+
+  await loadRequests();
+}
+
+async function sendRequest(){
+  if(!sessionId) return alert('Entre ou crie uma sessão primeiro.');
+
+  const message = $('requestText').value.trim();
+  if(!message) return alert('Digite sua solicitação.');
+
+  const {data:session,error:sessionError} = await db
+    .from('sessoes')
+    .select('status')
+    .eq('id',sessionId)
+    .maybeSingle();
+
+  if(sessionError || !session || session.status !== 'autorizada'){
+    return alert('A sessão precisa estar autorizada.');
+  }
+
+  const {error} = await db.from('solicitacoes').insert({
+    sessao_id:sessionId,
+    mensagem:message
+  });
+
+  if(error) return alert('Erro ao enviar: ' + error.message);
+
+  $('requestText').value = '';
+  await loadRequests();
+}
+
+async function loadRequests(){
+  if(!sessionId) return;
+
+  const {data,error} = await db
+    .from('solicitacoes')
+    .select('mensagem,status,criado_em')
+    .eq('sessao_id',sessionId)
+    .order('criado_em',{ascending:false});
+
+  if(error){
+    $('requests').textContent = 'Erro ao carregar solicitações: ' + error.message;
+    return;
+  }
+
+  $('requests').innerHTML = '';
+
+  if(!data || data.length === 0){
+    $('requests').textContent = 'Nenhuma solicitação.';
+    return;
+  }
+
+  data.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.textContent = item.mensagem + ' — ' + item.status;
+    $('requests').appendChild(div);
+  });
+}
+
+function startPolling(){
+  stopPolling();
+  refreshSession();
+  poller = setInterval(refreshSession,3000);
+}
+
+function stopPolling(){
+  if(poller){
+    clearInterval(poller);
+    poller = null;
+  }
+}
+
+initialize();
 </script>
-
 </body>
 </html>
