@@ -4,47 +4,121 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SYS://CONTROL 2.0</title>
+<title>SYS://CONTROL 2.1</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#050b09;color:#d9ffe8;font-family:Arial,sans-serif;padding:20px}
+body{
+  margin:0;
+  background:#050b09;
+  color:#d9ffe8;
+  font-family:Arial,sans-serif;
+  padding:15px;
+}
 main{max-width:720px;margin:auto}
 header{text-align:center;padding:25px 10px}
 h1{color:#39ff91;letter-spacing:3px}
 h2{font-size:16px;color:#39ff91}
-.panel{background:#0b1712;border:1px solid #174b32;border-radius:12px;padding:18px;margin:15px 0}
-button,input,textarea{width:100%;padding:13px;margin:7px 0;border-radius:7px;border:1px solid #286b48;background:#07110c;color:#eafff1;font-size:15px}
-button{background:#123b25;color:#65ffa5;font-weight:bold;cursor:pointer}
+.panel{
+  background:#0b1712;
+  border:1px solid #174b32;
+  border-radius:12px;
+  padding:18px;
+  margin:15px 0;
+}
+button,input,textarea{
+  width:100%;
+  padding:13px;
+  margin:7px 0;
+  border-radius:7px;
+  border:1px solid #286b48;
+  background:#07110c;
+  color:#eafff1;
+  font-size:15px;
+}
+button{
+  background:#123b25;
+  color:#65ffa5;
+  font-weight:bold;
+  cursor:pointer;
+}
 button:disabled{opacity:.45}
-.danger{background:#401b1b;border-color:#8d3939;color:#ffaaaa}
+.danger{
+  background:#401b1b;
+  border-color:#8d3939;
+  color:#ffaaaa;
+}
 .choice{display:flex;gap:10px}
 .choice button{flex:1}
-.status{color:#8dffb5;white-space:pre-wrap;line-height:1.6}
+.status{
+  color:#8dffb5;
+  white-space:pre-wrap;
+  line-height:1.6;
+}
 small{color:#8da99a;line-height:1.5}
-.item{padding:10px;border-bottom:1px solid #214331}
-footer{text-align:center;color:#688675;padding:25px;font-size:12px}
+.item{
+  padding:10px;
+  border-bottom:1px solid #214331;
+  overflow-wrap:anywhere;
+}
+.command{
+  color:#39ff91;
+  font-family:monospace;
+}
+footer{
+  text-align:center;
+  color:#688675;
+  padding:25px;
+  font-size:12px;
+}
+#greenScreen{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  background:#00e676;
+  color:#003b20;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  text-align:center;
+  padding:25px;
+}
+#greenScreen h1{color:#003b20}
+#greenScreen button{
+  background:#003b20;
+  color:white;
+  border:0;
+  max-width:220px;
+  margin-top:25px;
+}
 </style>
 </head>
+
 <body>
 <main>
+
 <header>
 <h1>SYS://CONTROL</h1>
-<p>DEVICE LINK // VERSION 2.0</p>
+<p>DEVICE LINK // VERSION 2.1</p>
 <p class="status" id="connection">CONECTANDO AO SERVIDOR...</p>
 </header>
 
 <section class="panel">
 <h2>01 // OPERATION MODE</h2>
+
 <div class="choice">
 <button onclick="setMode('admin')">ADMIN MODE</button>
 <button onclick="setMode('client')">CLIENT MODE</button>
 </div>
+
 <p id="mode">MODE: NOT SELECTED</p>
 </section>
 
 <section class="panel">
 <h2>02 // SESSION</h2>
+
 <div id="adminArea" hidden>
 <button onclick="createSession()">GERAR CÓDIGO E CRIAR SESSÃO</button>
 <p>CÓDIGO DA SESSÃO:</p>
@@ -52,48 +126,95 @@ footer{text-align:center;color:#688675;padding:25px;font-size:12px}
 <button onclick="copyCode()">COPIAR CÓDIGO</button>
 <button class="danger" onclick="endSession()">ENCERRAR SESSÃO</button>
 </div>
+
 <div id="clientArea" hidden>
-<input id="codeInput" placeholder="DIGITE O CÓDIGO DA SESSÃO" maxlength="12">
+<input id="codeInput"
+placeholder="DIGITE O CÓDIGO DA SESSÃO"
+maxlength="12">
+
 <button onclick="joinSession()">CONECTAR PELO CÓDIGO</button>
+
 <div class="choice">
 <button onclick="authorizeSession()">YES // AUTORIZAR</button>
 <button class="danger" onclick="declineSession()">NO // RECUSAR</button>
 </div>
 </div>
+
 <p class="status" id="sessionStatus">Nenhuma sessão ativa.</p>
 </section>
 
 <section class="panel">
 <h2>03 // ACTION REQUEST</h2>
-<textarea id="requestText" rows="3" placeholder="Descreva sua solicitação..."></textarea>
+
+<textarea id="requestText" rows="3"
+placeholder="Digite um comando..."></textarea>
+
 <button onclick="sendRequest()">SEND REQUEST</button>
-<div id="requests" class="status">Nenhuma solicitação.</div>
+
+<p class="command">COMANDOS DISPONÍVEIS:</p>
+<small>
+PING | STATUS | INFO | TIME | HELP | TELA_VERDE
+</small>
+
+<div id="requests" class="status">
+Nenhuma solicitação.
+</div>
 </section>
 
 <section class="panel">
-<h2>04 // SESSION INFORMATION</h2>
-<p class="status" id="info">Aguardando sessão.</p>
-<small>O compartilhamento de tela depende do suporte do navegador e da autorização explícita do usuário. Esta versão ainda não transmite a tela para o outro aparelho nem executa comandos nele.</small>
+<h2>04 // COMMAND TERMINAL</h2>
+<p class="status" id="terminal">
+Aguardando comandos...
+</p>
 </section>
 
-<footer>SYS.JS // DEVICE LINK<br>USER CONSENT REQUIRED</footer>
+<section class="panel">
+<h2>05 // SESSION INFORMATION</h2>
+<p class="status" id="info">Aguardando sessão.</p>
+<small>
+Os comandos atuam somente nesta página.
+O compartilhamento de tela depende de autorização
+explícita do usuário e do suporte do navegador.
+</small>
+</section>
+
+<footer>
+SYS.JS // DEVICE LINK<br>
+USER CONSENT REQUIRED
+</footer>
+
 </main>
 
-<script>
-const SUPABASE_URL = 'https://jwtrbuvzfiouhrkvcqgp.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_dajylApNZVhRfcvyzWklOQ_4W2UBjDm';
+<div id="greenScreen">
+<h1>SYS://CONTROL</h1>
+<h2 style="color:#003b20">TELA VERDE ATIVADA</h2>
+<p>Comando recebido e executado nesta página.</p>
+<button onclick="closeGreenScreen()">FECHAR TELA</button>
+</div>
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+const SUPABASE_URL =
+'https://jwtrbuvzfiouhrkvcqgp.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_dajylApNZVhRfcvyzWklOQ_4W2UBjDm';
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 let mode = null;
 let sessionId = null;
 let currentCode = null;
 let poller = null;
+let processedCommands = new Set();
+let greenScreenShown = false;
 
 const $ = id => document.getElementById(id);
 
 async function initialize(){
-  try {
+  try{
     let {data:{session}} = await db.auth.getSession();
 
     if(!session){
@@ -102,13 +223,15 @@ async function initialize(){
     }
 
     $('connection').textContent = 'SERVER: CONNECTED';
-  } catch(error) {
-    $('connection').textContent = 'ERRO DE CONEXÃO: ' + error.message;
+  }catch(error){
+    $('connection').textContent =
+      'ERRO DE CONEXÃO: ' + error.message;
   }
 }
 
 function setMode(value){
   mode = value;
+
   $('mode').textContent = 'MODE: ' + value.toUpperCase();
   $('adminArea').hidden = value !== 'admin';
   $('clientArea').hidden = value !== 'client';
@@ -117,70 +240,108 @@ function setMode(value){
 function randomCode(){
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
+
   for(let i=0;i<8;i++){
     code += chars[Math.floor(Math.random()*chars.length)];
   }
+
   return code;
 }
 
 async function createSession(){
-  if(mode !== 'admin') return alert('Selecione ADMIN MODE.');
+  if(mode !== 'admin'){
+    return alert('Selecione ADMIN MODE.');
+  }
 
   const {data:{user}} = await db.auth.getUser();
-  if(!user) return alert('Autenticação não concluída. Atualize a página.');
+
+  if(!user){
+    return alert('Autenticação não concluída. Atualize a página.');
+  }
 
   for(let attempt=0;attempt<3;attempt++){
     const code = randomCode();
-    const {data,error} = await db.rpc('criar_sessao',{p_codigo:code});
+
+    const {data,error} = await db.rpc(
+      'criar_sessao',
+      {p_codigo:code}
+    );
 
     if(!error){
       sessionId = data;
       currentCode = code;
+
       $('sessionCode').textContent = code;
-      $('sessionStatus').textContent = 'Sessão criada. Aguardando o cliente.';
-      $('info').textContent = 'Código criado. Envie-o somente à pessoa que deseja convidar.';
+      $('sessionStatus').textContent =
+        'Sessão criada. Aguardando o cliente.';
+
+      $('info').textContent =
+        'Envie o código somente à pessoa autorizada.';
+
       startPolling();
       return;
     }
 
     if(!String(error.message).toLowerCase().includes('duplicate')){
-      alert('Não foi possível criar a sessão: ' + error.message);
+      alert('Erro ao criar sessão: ' + error.message);
       return;
     }
   }
-  alert('Não foi possível gerar um código exclusivo. Tente novamente.');
+
+  alert('Não foi possível gerar outro código. Tente novamente.');
 }
 
 async function copyCode(){
   if(!currentCode) return;
-  try {
+
+  try{
     await navigator.clipboard.writeText(currentCode);
     alert('Código copiado!');
-  } catch {
-    alert('Seu código é: ' + currentCode);
+  }catch{
+    alert('Código: ' + currentCode);
   }
 }
 
 async function joinSession(){
-  if(mode !== 'client') return alert('Selecione CLIENT MODE.');
+  if(mode !== 'client'){
+    return alert('Selecione CLIENT MODE.');
+  }
 
   const code = $('codeInput').value.trim().toUpperCase();
+
   if(!code) return alert('Digite o código.');
 
-  const {data,error} = await db.rpc('entrar_sessao',{p_codigo:code});
-  if(error) return alert('Não foi possível entrar: ' + error.message);
+  const {data,error} = await db.rpc(
+    'entrar_sessao',
+    {p_codigo:code}
+  );
+
+  if(error){
+    return alert('Não foi possível entrar: ' + error.message);
+  }
 
   sessionId = data;
   currentCode = code;
-  $('sessionStatus').textContent = 'Pedido de conexão enviado. Aguarde a decisão.';
-  $('info').textContent = 'Você entrou na sessão. Escolha YES para autorizar ou NO para recusar.';
+
+  $('sessionStatus').textContent =
+    'Conexão estabelecida. Aguarde a autorização.';
+
+  $('info').textContent =
+    'Você entrou na sessão. Escolha YES para autorizar ou NO para recusar.';
+
   startPolling();
 }
 
 async function authorizeSession(){
-  if(mode !== 'client' || !currentCode) return alert('Entre em uma sessão primeiro.');
+  if(mode !== 'client' || !currentCode){
+    return alert('Entre em uma sessão primeiro.');
+  }
 
-  const {error} = await db.rpc('autorizar_sessao',{p_codigo:currentCode});
+  const {error} = await db.rpc(
+    'autorizar_sessao',
+    {p_codigo:currentCode}
+  );
+
   if(error) return alert(error.message);
 
   $('sessionStatus').textContent = 'SESSÃO AUTORIZADA.';
@@ -188,9 +349,15 @@ async function authorizeSession(){
 }
 
 async function declineSession(){
-  if(mode !== 'client' || !currentCode) return alert('Entre em uma sessão primeiro.');
+  if(mode !== 'client' || !currentCode){
+    return alert('Entre em uma sessão primeiro.');
+  }
 
-  const {error} = await db.rpc('recusar_sessao',{p_codigo:currentCode});
+  const {error} = await db.rpc(
+    'recusar_sessao',
+    {p_codigo:currentCode}
+  );
+
   if(error) return alert(error.message);
 
   $('sessionStatus').textContent = 'SESSÃO RECUSADA.';
@@ -198,9 +365,15 @@ async function declineSession(){
 }
 
 async function endSession(){
-  if(mode !== 'admin' || !currentCode) return alert('Nenhuma sessão ativa.');
+  if(mode !== 'admin' || !currentCode){
+    return alert('Nenhuma sessão ativa.');
+  }
 
-  const {error} = await db.rpc('encerrar_sessao',{p_codigo:currentCode});
+  const {error} = await db.rpc(
+    'encerrar_sessao',
+    {p_codigo:currentCode}
+  );
+
   if(error) return alert(error.message);
 
   $('sessionStatus').textContent = 'SESSÃO ENCERRADA.';
@@ -213,42 +386,49 @@ async function refreshSession(){
 
   const {data,error} = await db
     .from('sessoes')
-    .select('id,codigo,status,criado_em')
+    .select('id,codigo,status')
     .eq('id',sessionId)
     .maybeSingle();
 
   if(error){
-    $('info').textContent = 'Erro ao consultar sessão: ' + error.message;
+    $('info').textContent =
+      'Erro ao consultar sessão: ' + error.message;
     return;
   }
 
   if(!data){
-    $('info').textContent = 'Sessão não encontrada ou sem acesso.';
+    $('info').textContent =
+      'Sessão não encontrada ou sem acesso.';
     return;
   }
 
-  $('sessionStatus').textContent = 'STATUS: ' + data.status.toUpperCase();
+  $('sessionStatus').textContent =
+    'STATUS: ' + data.status.toUpperCase();
 
   if(data.status === 'autorizada'){
-    $('info').textContent = 'A pessoa autorizou a sessão. A comunicação de solicitações está disponível.';
-  } else if(data.status === 'recusada'){
+    $('info').textContent =
+      'Sessão autorizada. Comunicação disponível.';
+  }else if(data.status === 'recusada'){
     $('info').textContent = 'A pessoa recusou a sessão.';
     stopPolling();
-  } else if(data.status === 'encerrada'){
-    $('info').textContent = 'Esta sessão foi encerrada.';
+  }else if(data.status === 'encerrada'){
+    $('info').textContent = 'Sessão encerrada.';
     stopPolling();
-  } else {
-    $('info').textContent = 'Aguardando autorização da pessoa no outro aparelho.';
+  }else{
+    $('info').textContent = 'Aguardando autorização.';
   }
 
   await loadRequests();
 }
 
 async function sendRequest(){
-  if(!sessionId) return alert('Entre ou crie uma sessão primeiro.');
+  if(!sessionId){
+    return alert('Entre ou crie uma sessão primeiro.');
+  }
 
   const message = $('requestText').value.trim();
-  if(!message) return alert('Digite sua solicitação.');
+
+  if(!message) return alert('Digite uma solicitação.');
 
   const {data:session,error:sessionError} = await db
     .from('sessoes')
@@ -265,10 +445,107 @@ async function sendRequest(){
     mensagem:message
   });
 
-  if(error) return alert('Erro ao enviar: ' + error.message);
+  if(error){
+    return alert('Erro ao enviar: ' + error.message);
+  }
 
   $('requestText').value = '';
+  $('terminal').textContent =
+    'Comando enviado: ' + message;
+
   await loadRequests();
+}
+
+function showGreenScreen(){
+  if(greenScreenShown) return;
+
+  greenScreenShown = true;
+  $('greenScreen').style.display = 'flex';
+}
+
+function closeGreenScreen(){
+  $('greenScreen').style.display = 'none';
+  greenScreenShown = false;
+}
+
+async function sendResponse(message){
+  if(!sessionId) return;
+
+  const {error} = await db.from('solicitacoes').insert({
+    sessao_id:sessionId,
+    mensagem:'RESPOSTA: ' + message
+  });
+
+  if(error){
+    $('terminal').textContent =
+      'Erro ao enviar resposta: ' + error.message;
+  }
+}
+
+async function executeCommand(item){
+  if(mode !== 'client') return;
+
+  const command = item.mensagem.trim().toUpperCase();
+
+  if(command.startsWith('RESPOSTA:')) return;
+
+  const validCommands = [
+    'PING','STATUS','INFO','TIME','HELP','TELA_VERDE'
+  ];
+
+  if(!validCommands.includes(command)) return;
+
+  if(processedCommands.has(item.id)) return;
+
+  processedCommands.add(item.id);
+
+  const {data:session,error} = await db
+    .from('sessoes')
+    .select('status')
+    .eq('id',sessionId)
+    .maybeSingle();
+
+  if(error || !session || session.status !== 'autorizada'){
+    return;
+  }
+
+  let result = '';
+
+  switch(command){
+
+    case 'PING':
+      result = 'PONG - Página conectada e respondendo.';
+      break;
+
+    case 'STATUS':
+      result = 'Sessão: ' + session.status;
+      break;
+
+    case 'INFO':
+      result =
+        'Navegador: ' + navigator.userAgent +
+        ' | Idioma: ' + navigator.language;
+      break;
+
+    case 'TIME':
+      result = 'Horário local: ' + new Date().toLocaleString();
+      break;
+
+    case 'HELP':
+      result =
+        'Comandos: PING, STATUS, INFO, TIME, HELP, TELA_VERDE.';
+      break;
+
+    case 'TELA_VERDE':
+      showGreenScreen();
+      result = 'Tela verde exibida na página CLIENT.';
+      break;
+  }
+
+  $('terminal').textContent =
+    'COMANDO: ' + command + '\nRESULTADO: ' + result;
+
+  await sendResponse(result);
 }
 
 async function loadRequests(){
@@ -276,12 +553,13 @@ async function loadRequests(){
 
   const {data,error} = await db
     .from('solicitacoes')
-    .select('mensagem,status,criado_em')
+    .select('id,mensagem,status,criado_em')
     .eq('sessao_id',sessionId)
     .order('criado_em',{ascending:false});
 
   if(error){
-    $('requests').textContent = 'Erro ao carregar solicitações: ' + error.message;
+    $('requests').textContent =
+      'Erro ao carregar solicitações: ' + error.message;
     return;
   }
 
@@ -298,6 +576,13 @@ async function loadRequests(){
     div.textContent = item.mensagem + ' — ' + item.status;
     $('requests').appendChild(div);
   });
+
+  // Executa comandos recebidos somente no CLIENT.
+  if(mode === 'client'){
+    for(const item of [...data].reverse()){
+      await executeCommand(item);
+    }
+  }
 }
 
 function startPolling(){
@@ -315,5 +600,6 @@ function stopPolling(){
 
 initialize();
 </script>
+
 </body>
 </html>
