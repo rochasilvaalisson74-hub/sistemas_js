@@ -4,115 +4,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SYS://CONTROL 2.1</title>
+<title>SYS://CONTROL 2.2</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  background:#050b09;
-  color:#d9ffe8;
-  font-family:Arial,sans-serif;
-  padding:15px;
-}
+body{margin:0;background:#050b09;color:#d9ffe8;font-family:Arial,sans-serif;padding:15px}
 main{max-width:720px;margin:auto}
 header{text-align:center;padding:25px 10px}
 h1{color:#39ff91;letter-spacing:3px}
 h2{font-size:16px;color:#39ff91}
-.panel{
-  background:#0b1712;
-  border:1px solid #174b32;
-  border-radius:12px;
-  padding:18px;
-  margin:15px 0;
-}
-button,input,textarea{
-  width:100%;
-  padding:13px;
-  margin:7px 0;
-  border-radius:7px;
-  border:1px solid #286b48;
-  background:#07110c;
-  color:#eafff1;
-  font-size:15px;
-}
-button{
-  background:#123b25;
-  color:#65ffa5;
-  font-weight:bold;
-  cursor:pointer;
-}
+.panel{background:#0b1712;border:1px solid #174b32;border-radius:12px;padding:18px;margin:15px 0}
+button,input,textarea{width:100%;padding:13px;margin:7px 0;border-radius:7px;border:1px solid #286b48;background:#07110c;color:#eafff1;font-size:15px}
+button{background:#123b25;color:#65ffa5;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.45}
-.danger{
-  background:#401b1b;
-  border-color:#8d3939;
-  color:#ffaaaa;
-}
+.danger{background:#401b1b;border-color:#8d3939;color:#ffaaaa}
 .choice{display:flex;gap:10px}
 .choice button{flex:1}
-.status{
-  color:#8dffb5;
-  white-space:pre-wrap;
-  line-height:1.6;
-}
+.status{color:#8dffb5;white-space:pre-wrap;line-height:1.6}
 small{color:#8da99a;line-height:1.5}
-.item{
-  padding:10px;
-  border-bottom:1px solid #214331;
-  overflow-wrap:anywhere;
-}
-.command{
-  color:#39ff91;
-  font-family:monospace;
-}
-footer{
-  text-align:center;
-  color:#688675;
-  padding:25px;
-  font-size:12px;
-}
-#greenScreen{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:999999;
-  background:#00e676;
-  color:#003b20;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  text-align:center;
-  padding:25px;
-}
+.item{padding:12px 5px;border-bottom:1px solid #214331;overflow-wrap:anywhere;line-height:1.6}
+.command{color:#39ff91;font-family:monospace}
+.result{color:#8dffb5}
+.pending{color:#ffd479}
+.error{color:#ff9999}
+footer{text-align:center;color:#688675;padding:25px;font-size:12px}
+#greenScreen{display:none;position:fixed;inset:0;z-index:999999;background:#00e676;color:#003b20;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:25px}
 #greenScreen h1{color:#003b20}
-#greenScreen button{
-  background:#003b20;
-  color:white;
-  border:0;
-  max-width:220px;
-  margin-top:25px;
-}
+#greenScreen button{background:#003b20;color:white;border:0;max-width:220px;margin-top:25px}
 </style>
 </head>
-
 <body>
 <main>
 
 <header>
 <h1>SYS://CONTROL</h1>
-<p>DEVICE LINK // VERSION 2.1</p>
+<p>DEVICE LINK // VERSION 2.2</p>
 <p class="status" id="connection">CONECTANDO AO SERVIDOR...</p>
 </header>
 
 <section class="panel">
 <h2>01 // OPERATION MODE</h2>
-
 <div class="choice">
 <button onclick="setMode('admin')">ADMIN MODE</button>
 <button onclick="setMode('client')">CLIENT MODE</button>
 </div>
-
 <p id="mode">MODE: NOT SELECTED</p>
 </section>
 
@@ -128,12 +63,8 @@ footer{
 </div>
 
 <div id="clientArea" hidden>
-<input id="codeInput"
-placeholder="DIGITE O CÓDIGO DA SESSÃO"
-maxlength="12">
-
+<input id="codeInput" placeholder="DIGITE O CÓDIGO DA SESSÃO" maxlength="12">
 <button onclick="joinSession()">CONECTAR PELO CÓDIGO</button>
-
 <div class="choice">
 <button onclick="authorizeSession()">YES // AUTORIZAR</button>
 <button class="danger" onclick="declineSession()">NO // RECUSAR</button>
@@ -144,37 +75,39 @@ maxlength="12">
 </section>
 
 <section class="panel">
-<h2>03 // ACTION REQUEST</h2>
+<h2>03 // BATCH COMMAND EXECUTOR</h2>
+<p class="status">Digite um comando por linha. Os comandos serão executados em sequência no CLIENT.</p>
 
-<textarea id="requestText" rows="3"
-placeholder="Digite um comando..."></textarea>
+<textarea id="requestText" rows="6" placeholder="PING&#10;STATUS&#10;INFO&#10;TIME"></textarea>
 
-<button onclick="sendRequest()">SEND REQUEST</button>
+<button id="sendButton" onclick="sendRequest()">EXECUTAR LOTE</button>
+
+<button class="danger" onclick="clearInput()">LIMPAR COMANDOS</button>
 
 <p class="command">COMANDOS DISPONÍVEIS:</p>
 <small>
-PING | STATUS | INFO | TIME | HELP | TELA_VERDE
+PING | STATUS | INFO | TIME | HELP | TELA_VERDE | FECHAR_TELA
 </small>
 
-<div id="requests" class="status">
-Nenhuma solicitação.
-</div>
+<p class="status" id="batchProgress">Nenhum lote enviado.</p>
 </section>
 
 <section class="panel">
 <h2>04 // COMMAND TERMINAL</h2>
-<p class="status" id="terminal">
-Aguardando comandos...
-</p>
+<p class="status" id="terminal">Aguardando comandos...</p>
 </section>
 
 <section class="panel">
-<h2>05 // SESSION INFORMATION</h2>
+<h2>05 // HISTÓRICO E RESPOSTAS</h2>
+<div id="requests" class="status">Nenhuma solicitação.</div>
+</section>
+
+<section class="panel">
+<h2>06 // SESSION INFORMATION</h2>
 <p class="status" id="info">Aguardando sessão.</p>
 <small>
-Os comandos atuam somente nesta página.
-O compartilhamento de tela depende de autorização
-explícita do usuário e do suporte do navegador.
+Os comandos atuam somente nesta página. O CLIENT precisa manter
+a página aberta e a sessão autorizada.
 </small>
 </section>
 
@@ -182,7 +115,6 @@ explícita do usuário e do suporte do navegador.
 SYS.JS // DEVICE LINK<br>
 USER CONSENT REQUIRED
 </footer>
-
 </main>
 
 <div id="greenScreen">
@@ -209,9 +141,21 @@ let sessionId = null;
 let currentCode = null;
 let poller = null;
 let processedCommands = new Set();
-let greenScreenShown = false;
+let processingCommands = new Set();
+let clientJoinedAt = null;
+let busy = false;
 
 const $ = id => document.getElementById(id);
+
+const validCommands = [
+  'PING',
+  'STATUS',
+  'INFO',
+  'TIME',
+  'HELP',
+  'TELA_VERDE',
+  'FECHAR_TELA'
+];
 
 async function initialize(){
   try{
@@ -225,13 +169,12 @@ async function initialize(){
     $('connection').textContent = 'SERVER: CONNECTED';
   }catch(error){
     $('connection').textContent =
-      'ERRO DE CONEXÃO: ' + error.message;
+      'ERRO: ' + error.message;
   }
 }
 
 function setMode(value){
   mode = value;
-
   $('mode').textContent = 'MODE: ' + value.toUpperCase();
   $('adminArea').hidden = value !== 'admin';
   $('clientArea').hidden = value !== 'client';
@@ -240,24 +183,41 @@ function setMode(value){
 function randomCode(){
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
-
   for(let i=0;i<8;i++){
     code += chars[Math.floor(Math.random()*chars.length)];
   }
-
   return code;
 }
 
-async function createSession(){
-  if(mode !== 'admin'){
-    return alert('Selecione ADMIN MODE.');
+function storageKey(){
+  return 'sys_control_processed_' + sessionId;
+}
+
+function loadProcessed(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(storageKey()) || '[]');
+    processedCommands = new Set(saved);
+  }catch{
+    processedCommands = new Set();
   }
+}
+
+function saveProcessed(){
+  try{
+    localStorage.setItem(
+      storageKey(),
+      JSON.stringify([...processedCommands])
+    );
+  }catch(error){
+    console.warn('Não foi possível salvar histórico local.');
+  }
+}
+
+async function createSession(){
+  if(mode !== 'admin') return alert('Selecione ADMIN MODE.');
 
   const {data:{user}} = await db.auth.getUser();
-
-  if(!user){
-    return alert('Autenticação não concluída. Atualize a página.');
-  }
+  if(!user) return alert('Autenticação não concluída.');
 
   for(let attempt=0;attempt<3;attempt++){
     const code = randomCode();
@@ -278,17 +238,18 @@ async function createSession(){
       $('info').textContent =
         'Envie o código somente à pessoa autorizada.';
 
+      loadProcessed();
       startPolling();
       return;
     }
 
     if(!String(error.message).toLowerCase().includes('duplicate')){
-      alert('Erro ao criar sessão: ' + error.message);
+      alert('Erro: ' + error.message);
       return;
     }
   }
 
-  alert('Não foi possível gerar outro código. Tente novamente.');
+  alert('Não foi possível gerar um código.');
 }
 
 async function copyCode(){
@@ -303,12 +264,9 @@ async function copyCode(){
 }
 
 async function joinSession(){
-  if(mode !== 'client'){
-    return alert('Selecione CLIENT MODE.');
-  }
+  if(mode !== 'client') return alert('Selecione CLIENT MODE.');
 
   const code = $('codeInput').value.trim().toUpperCase();
-
   if(!code) return alert('Digite o código.');
 
   const {data,error} = await db.rpc(
@@ -316,18 +274,30 @@ async function joinSession(){
     {p_codigo:code}
   );
 
-  if(error){
-    return alert('Não foi possível entrar: ' + error.message);
-  }
+  if(error) return alert('Erro ao entrar: ' + error.message);
 
   sessionId = data;
   currentCode = code;
 
+  const savedJoin = localStorage.getItem('sys_control_join_' + sessionId);
+
+  if(savedJoin){
+    clientJoinedAt = savedJoin;
+  }else{
+    clientJoinedAt = new Date().toISOString();
+    localStorage.setItem(
+      'sys_control_join_' + sessionId,
+      clientJoinedAt
+    );
+  }
+
+  loadProcessed();
+
   $('sessionStatus').textContent =
-    'Conexão estabelecida. Aguarde a autorização.';
+    'Conexão estabelecida. Aguarde autorização.';
 
   $('info').textContent =
-    'Você entrou na sessão. Escolha YES para autorizar ou NO para recusar.';
+    'Você entrou na sessão. Autorize ou recuse o acesso.';
 
   startPolling();
 }
@@ -391,14 +361,12 @@ async function refreshSession(){
     .maybeSingle();
 
   if(error){
-    $('info').textContent =
-      'Erro ao consultar sessão: ' + error.message;
+    $('info').textContent = 'Erro: ' + error.message;
     return;
   }
 
   if(!data){
-    $('info').textContent =
-      'Sessão não encontrada ou sem acesso.';
+    $('info').textContent = 'Sessão não encontrada.';
     return;
   }
 
@@ -409,7 +377,7 @@ async function refreshSession(){
     $('info').textContent =
       'Sessão autorizada. Comunicação disponível.';
   }else if(data.status === 'recusada'){
-    $('info').textContent = 'A pessoa recusou a sessão.';
+    $('info').textContent = 'Sessão recusada.';
     stopPolling();
   }else if(data.status === 'encerrada'){
     $('info').textContent = 'Sessão encerrada.';
@@ -421,14 +389,43 @@ async function refreshSession(){
   await loadRequests();
 }
 
+function clearInput(){
+  $('requestText').value = '';
+}
+
+function parseBatch(message){
+  if(!message.startsWith('LOTE:')) return null;
+
+  try{
+    return JSON.parse(message.substring(5));
+  }catch{
+    return null;
+  }
+}
+
 async function sendRequest(){
-  if(!sessionId){
-    return alert('Entre ou crie uma sessão primeiro.');
+  if(mode !== 'admin'){
+    return alert('Somente o ADMIN pode enviar lotes.');
   }
 
-  const message = $('requestText').value.trim();
+  if(!sessionId) return alert('Crie ou entre em uma sessão.');
 
-  if(!message) return alert('Digite uma solicitação.');
+  const commands = $('requestText').value
+    .split(/\r?\n/)
+    .map(x => x.trim().toUpperCase())
+    .filter(Boolean);
+
+  if(!commands.length) return alert('Digite os comandos.');
+
+  const invalid = commands.filter(x => !validCommands.includes(x));
+
+  if(invalid.length){
+    return alert('Comandos não reconhecidos: ' + invalid.join(', '));
+  }
+
+  if(commands.length > 20){
+    return alert('Envie no máximo 20 comandos por lote.');
+  }
 
   const {data:session,error:sessionError} = await db
     .from('sessoes')
@@ -440,112 +437,325 @@ async function sendRequest(){
     return alert('A sessão precisa estar autorizada.');
   }
 
+  const batchId =
+    Date.now().toString(36) +
+    Math.random().toString(36).substring(2,7);
+
+  const payload = {
+    id:batchId,
+    commands:commands
+  };
+
+  $('sendButton').disabled = true;
+
+  const {error} = await db.from('solicitacoes').insert({
+    sessao_id:sessionId,
+    mensagem:'LOTE:' + JSON.stringify(payload)
+  });
+
+  $('sendButton').disabled = false;
+
+  if(error){
+    return alert('Erro ao enviar lote: ' + error.message);
+  }
+
+  $('requestText').value = '';
+
+  $('terminal').textContent =
+    'LOTE ENVIADO: ' + batchId +
+    '\nComandos: ' + commands.length;
+
+  $('batchProgress').textContent =
+    'Lote ' + batchId + ' enviado. Aguardando respostas...';
+
+  await loadRequests();
+}
+
+function showGreenScreen(){
+  $('greenScreen').style.display = 'flex';
+}
+
+function closeGreenScreen(){
+  $('greenScreen').style.display = 'none';
+}
+
+async function sendResponse(batchId,index,command,result){
+  const message =
+    'RESPOSTA|' + batchId + '|' + index + '|' +
+    command + '|' + result;
+
   const {error} = await db.from('solicitacoes').insert({
     sessao_id:sessionId,
     mensagem:message
   });
 
   if(error){
-    return alert('Erro ao enviar: ' + error.message);
-  }
-
-  $('requestText').value = '';
-  $('terminal').textContent =
-    'Comando enviado: ' + message;
-
-  await loadRequests();
-}
-
-function showGreenScreen(){
-  if(greenScreenShown) return;
-
-  greenScreenShown = true;
-  $('greenScreen').style.display = 'flex';
-}
-
-function closeGreenScreen(){
-  $('greenScreen').style.display = 'none';
-  greenScreenShown = false;
-}
-
-async function sendResponse(message){
-  if(!sessionId) return;
-
-  const {error} = await db.from('solicitacoes').insert({
-    sessao_id:sessionId,
-    mensagem:'RESPOSTA: ' + message
-  });
-
-  if(error){
     $('terminal').textContent =
       'Erro ao enviar resposta: ' + error.message;
+    return false;
   }
+
+  return true;
+}
+
+async function runCommand(command){
+  switch(command){
+    case 'PING':
+      return 'PONG - Página conectada e respondendo.';
+
+    case 'STATUS':
+      return 'Sessão autorizada e página ativa.';
+
+    case 'INFO':
+      return 'Navegador: ' + navigator.userAgent +
+        ' | Idioma: ' + navigator.language;
+
+    case 'TIME':
+      return 'Horário local: ' + new Date().toLocaleString();
+
+    case 'HELP':
+      return 'Comandos: ' + validCommands.join(', ');
+
+    case 'TELA_VERDE':
+      showGreenScreen();
+      return 'Tela verde exibida na página CLIENT.';
+
+    case 'FECHAR_TELA':
+      closeGreenScreen();
+      return 'Tela verde fechada na página CLIENT.';
+
+    default:
+      throw new Error('Comando não reconhecido.');
+  }
+}
+
+async function processBatch(item,batch){
+  if(mode !== 'client') return;
+  if(!batch || !batch.id || !Array.isArray(batch.commands)) return;
+
+  const commands = batch.commands;
+
+  for(let i=0;i<commands.length;i++){
+    const command = String(commands[i]).toUpperCase().trim();
+    const commandKey = item.id + ':' + i;
+
+    if(processedCommands.has(commandKey)) continue;
+
+    if(!validCommands.includes(command)){
+      const ok = await sendResponse(
+        batch.id,i,command,'ERRO: comando inválido.'
+      );
+      if(ok){
+        processedCommands.add(commandKey);
+        saveProcessed();
+      }
+      continue;
+    }
+
+    const {data:session,error} = await db
+      .from('sessoes')
+      .select('status')
+      .eq('id',sessionId)
+      .maybeSingle();
+
+    if(error || !session || session.status !== 'autorizada'){
+      $('terminal').textContent =
+        'Execução interrompida: sessão não autorizada.';
+      return;
+    }
+
+    $('terminal').textContent =
+      'EXECUTANDO LOTE: ' + batch.id +
+      '\nComando ' + (i+1) + ' de ' + commands.length +
+      '\n' + command;
+
+    try{
+      const result = await runCommand(command);
+
+      const ok = await sendResponse(
+        batch.id,i,command,result
+      );
+
+      if(ok){
+        processedCommands.add(commandKey);
+        saveProcessed();
+      }else{
+        return;
+      }
+
+    }catch(error){
+      const ok = await sendResponse(
+        batch.id,i,command,'ERRO: ' + error.message
+      );
+
+      if(ok){
+        processedCommands.add(commandKey);
+        saveProcessed();
+      }
+    }
+  }
+
+  $('terminal').textContent =
+    'LOTE CONCLUÍDO: ' + batch.id +
+    '\nTotal de comandos: ' + commands.length;
 }
 
 async function executeCommand(item){
   if(mode !== 'client') return;
 
-  const command = item.mensagem.trim().toUpperCase();
+  if(processedCommands.has(String(item.id))) return;
+  if(processingCommands.has(String(item.id))) return;
 
-  if(command.startsWith('RESPOSTA:')) return;
+  const message = item.mensagem.trim();
 
-  const validCommands = [
-    'PING','STATUS','INFO','TIME','HELP','TELA_VERDE'
-  ];
+  if(message.startsWith('RESPOSTA|') ||
+     message.startsWith('RESPOSTA:')) return;
 
-  if(!validCommands.includes(command)) return;
-
-  if(processedCommands.has(item.id)) return;
-
-  processedCommands.add(item.id);
-
-  const {data:session,error} = await db
-    .from('sessoes')
-    .select('status')
-    .eq('id',sessionId)
-    .maybeSingle();
-
-  if(error || !session || session.status !== 'autorizada'){
+  if(clientJoinedAt && item.criado_em &&
+     new Date(item.criado_em) < new Date(clientJoinedAt)){
     return;
   }
 
-  let result = '';
+  const batch = parseBatch(message);
 
-  switch(command){
-
-    case 'PING':
-      result = 'PONG - Página conectada e respondendo.';
-      break;
-
-    case 'STATUS':
-      result = 'Sessão: ' + session.status;
-      break;
-
-    case 'INFO':
-      result =
-        'Navegador: ' + navigator.userAgent +
-        ' | Idioma: ' + navigator.language;
-      break;
-
-    case 'TIME':
-      result = 'Horário local: ' + new Date().toLocaleString();
-      break;
-
-    case 'HELP':
-      result =
-        'Comandos: PING, STATUS, INFO, TIME, HELP, TELA_VERDE.';
-      break;
-
-    case 'TELA_VERDE':
-      showGreenScreen();
-      result = 'Tela verde exibida na página CLIENT.';
-      break;
+  if(batch){
+    processingCommands.add(String(item.id));
+    try{
+      await processBatch(item,batch);
+      if(batch.commands.every((cmd,i) =>
+        processedCommands.has(item.id + ':' + i)
+      )){
+        processedCommands.add(String(item.id));
+        saveProcessed();
+      }
+    }finally{
+      processingCommands.delete(String(item.id));
+    }
+    return;
   }
 
-  $('terminal').textContent =
-    'COMANDO: ' + command + '\nRESULTADO: ' + result;
+  const command = message.toUpperCase();
 
-  await sendResponse(result);
+  if(!validCommands.includes(command)) return;
+
+  processingCommands.add(String(item.id));
+
+  try{
+    const {data:session,error} = await db
+      .from('sessoes')
+      .select('status')
+      .eq('id',sessionId)
+      .maybeSingle();
+
+    if(error || !session || session.status !== 'autorizada'){
+      return;
+    }
+
+    const result = await runCommand(command);
+    const ok = await sendResponse(
+      'LEGACY-' + item.id,0,command,result
+    );
+
+    if(ok){
+      processedCommands.add(String(item.id));
+      saveProcessed();
+    }
+  }finally{
+    processingCommands.delete(String(item.id));
+  }
+}
+
+function renderRequests(data){
+  const responses = new Map();
+
+  data.forEach(item => {
+    const parts = item.mensagem.split('|');
+
+    if(parts[0] === 'RESPOSTA' && parts.length >= 5){
+      responses.set(parts[1] + ':' + parts[2],parts);
+    }
+  });
+
+  $('requests').innerHTML = '';
+
+  if(!data.length){
+    $('requests').textContent = 'Nenhuma solicitação.';
+    return;
+  }
+
+  for(const item of data){
+    const message = item.mensagem;
+
+    if(message.startsWith('RESPOSTA|')){
+      const p = message.split('|');
+      const div = document.createElement('div');
+      div.className = 'item result';
+      div.textContent =
+        'CONCLUÍDO: ' + (p[3] || 'Comando') +
+        '\n' + (p.slice(4).join('|') || '');
+      $('requests').appendChild(div);
+      continue;
+    }
+
+    if(message.startsWith('RESPOSTA:')){
+      const div = document.createElement('div');
+      div.className = 'item result';
+      div.textContent = message;
+      $('requests').appendChild(div);
+      continue;
+    }
+
+    const batch = parseBatch(message);
+
+    if(batch){
+      const div = document.createElement('div');
+      div.className = 'item';
+      const title = document.createElement('strong');
+      title.textContent = 'LOTE ' + batch.id;
+      div.appendChild(title);
+
+      batch.commands.forEach((command,index) => {
+        const line = document.createElement('div');
+        const answer = responses.get(batch.id + ':' + index);
+
+        line.className = answer ? 'result' : 'pending';
+        line.textContent =
+          (answer ? '✓ ' : '◷ ') +
+          command +
+          (answer ? ' — ' + answer.slice(4).join('|') : ' — aguardando');
+
+        div.appendChild(line);
+      });
+
+      $('requests').appendChild(div);
+    }else{
+      const div = document.createElement('div');
+      div.className = 'item pending';
+      div.textContent = message + ' — solicitação';
+      $('requests').appendChild(div);
+    }
+  }
+
+  if(mode === 'admin'){
+    let total = 0;
+    let completed = 0;
+
+    data.forEach(item => {
+      const batch = parseBatch(item.mensagem);
+      if(batch){
+        total += batch.commands.length;
+        batch.commands.forEach((cmd,index) => {
+          if(responses.has(batch.id + ':' + index)) completed++;
+        });
+      }
+    });
+
+    if(total){
+      $('batchProgress').textContent =
+        'PROGRESSO: ' + completed + ' / ' + total +
+        ' comandos respondidos.';
+    }
+  }
 }
 
 async function loadRequests(){
@@ -555,31 +765,18 @@ async function loadRequests(){
     .from('solicitacoes')
     .select('id,mensagem,status,criado_em')
     .eq('sessao_id',sessionId)
-    .order('criado_em',{ascending:false});
+    .order('criado_em',{ascending:true});
 
   if(error){
     $('requests').textContent =
-      'Erro ao carregar solicitações: ' + error.message;
+      'Erro ao carregar: ' + error.message;
     return;
   }
 
-  $('requests').innerHTML = '';
+  renderRequests(data || []);
 
-  if(!data || data.length === 0){
-    $('requests').textContent = 'Nenhuma solicitação.';
-    return;
-  }
-
-  data.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.textContent = item.mensagem + ' — ' + item.status;
-    $('requests').appendChild(div);
-  });
-
-  // Executa comandos recebidos somente no CLIENT.
   if(mode === 'client'){
-    for(const item of [...data].reverse()){
+    for(const item of data || []){
       await executeCommand(item);
     }
   }
@@ -600,6 +797,5 @@ function stopPolling(){
 
 initialize();
 </script>
-
 </body>
 </html>
